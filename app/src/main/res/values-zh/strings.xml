@@ -61,6 +61,7 @@
     <string name="image_alt_dialog_label">描述</string>
     <string name="image_alt_dialog_save">保存</string>
     <string name="add_note">添加笔记</string>
+    <string name="paste_new_note">粘贴为新笔记</string>
     <string name="no_notes_yet">暂无笔记</string>
     <string name="create_first_note_hint">点击 + 创建第一篇笔记</string>
     <string name="create_note">创建笔记</string>

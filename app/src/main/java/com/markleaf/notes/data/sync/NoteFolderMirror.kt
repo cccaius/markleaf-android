@@ -264,6 +264,50 @@ object NoteFolderMirror {
     }
 
     /**
+     * Delete the notes the folder no longer holds — the third, opt-in direction
+     * of the mirror, where the linked folder is the source of truth for the
+     * notes Markleaf itself exported there.
+     *
+     * Everything [importChanges] is careful about points away from this: a
+     * missing file means nothing on its own, because a sync client that has not
+     * delivered yet looks exactly like a deletion. So this is a separate call a
+     * caller has to make on purpose, and its eligibility rules are narrow — see
+     * [MirrorPrune], which also documents the two-listing guard. Returns how
+     * many notes were handed to [applyDelete]; zero whenever the folder could
+     * not be read or its listing did not repeat.
+     *
+     * [existing] must be the complete note set, exactly as for [importChanges].
+     */
+    suspend fun pruneMissingNotes(
+        context: Context,
+        folderUri: Uri,
+        existing: List<Note>,
+        metadata: MirrorMetadata = MirrorMetadata.Frontmatter,
+        maxDepth: Int = 0,
+        applyDelete: suspend (String) -> Unit
+    ): Int {
+        val folder = DocumentFile.fromTreeUri(context, folderUri) ?: return 0
+        return MirrorPrune.pruneMissing(context, folder, existing, metadata, maxDepth, applyDelete)
+    }
+
+    /** [pruneMissingNotes] once the folder has been resolved — see [MirrorPrune]. */
+    internal suspend fun pruneMissingNotesIn(
+        context: Context,
+        folder: DocumentFile,
+        existing: List<Note>,
+        metadata: MirrorMetadata = MirrorMetadata.Frontmatter,
+        maxDepth: Int = 0,
+        applyDelete: suspend (String) -> Unit
+    ): Int = MirrorPrune.pruneMissing(context, folder, existing, metadata, maxDepth, applyDelete)
+
+    /** See [MirrorPrune.missingNoteIds]. */
+    internal fun missingMirrorNoteIds(
+        notes: List<Note>,
+        presentNoteIds: Set<String>,
+        presentFileBases: Set<String>
+    ): List<String> = MirrorPrune.missingNoteIds(notes, presentNoteIds, presentFileBases)
+
+    /**
      * Count what [importChanges] would take in, without taking any of it in.
      * See [MirrorSurvey] for why linking asks before importing.
      *

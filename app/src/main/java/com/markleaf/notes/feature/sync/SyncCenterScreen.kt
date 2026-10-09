@@ -231,9 +231,24 @@ fun SyncCenterScreen(
                                                     titleSource = appSettings.noteTitleSource
                                                 )
                                             }
+                                            // The same source-of-truth rule the
+                                            // foreground reconcile runs: a note
+                                            // whose file the folder no longer
+                                            // holds goes with the file.
+                                            val removed = withContext(Dispatchers.IO) {
+                                                NoteFolderMirror.pruneMissingNotes(
+                                                    context = context,
+                                                    folderUri = uri,
+                                                    existing = noteRepository.getAllNotes(),
+                                                    metadata = appSettings.mirrorMetadata(),
+                                                    applyDelete = { id ->
+                                                        noteRepository.deleteForever(id)
+                                                    }
+                                                )
+                                            }
                                             // A placed widget hears about an
                                             // import no other way (#262).
-                                            if (result.changedAnything()) {
+                                            if (result.changedAnything() || removed > 0) {
                                                 WidgetRefresh.notesChanged(context)
                                             }
                                             settingsRepository.setSyncLastSyncedAt(

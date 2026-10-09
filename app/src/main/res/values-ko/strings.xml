@@ -57,6 +57,7 @@
     <string name="image_alt_dialog_label">설명</string>
     <string name="image_alt_dialog_save">저장</string>
     <string name="add_note">노트 추가</string>
+    <string name="paste_new_note">붙여넣어 새 노트</string>
     <string name="no_notes_yet">아직 노트가 없습니다</string>
     <string name="create_first_note_hint">+ 버튼을 눌러 첫 노트를 만들어보세요</string>
     <string name="create_note">노트 만들기</string>

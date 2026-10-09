@@ -65,6 +65,7 @@
     <string name="image_alt_dialog_label">Opis</string>
     <string name="image_alt_dialog_save">Spremi</string>
     <string name="add_note">Dodaj bilješku</string>
+    <string name="paste_new_note">Zalijepi novu bilješku</string>
     <string name="no_notes_yet">Još nema bilješki</string>
     <string name="create_first_note_hint">Dodirnite + za stvaranje svoje prve bilješke</string>
     <string name="create_note">Stvori bilješku</string>

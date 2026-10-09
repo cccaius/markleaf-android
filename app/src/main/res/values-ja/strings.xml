@@ -57,6 +57,7 @@
     <string name="image_alt_dialog_label">説明</string>
     <string name="image_alt_dialog_save">保存</string>
     <string name="add_note">ノートを追加</string>
+    <string name="paste_new_note">貼り付けて新しいノート</string>
     <string name="no_notes_yet">ノートがまだありません</string>
     <string name="create_first_note_hint">+ をタップして最初のノートを作成</string>
     <string name="create_note">ノートを作成</string>

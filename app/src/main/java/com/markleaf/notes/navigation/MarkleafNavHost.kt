@@ -19,6 +19,8 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import android.content.ClipboardManager
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -304,6 +306,67 @@ fun MarkleafNavHost(
         composable(NavRoutes.NOTES) {
             val viewModel = viewModel<NotesViewModel>(factory = viewModelFactory)
             val coroutineScope = rememberCoroutineScope()
+            // The paste FAB is the add-note FAB's twin: same note, same
+            // navigation. The one difference is where the first keystrokes come
+            // from — the clipboard, instead of an empty buffer. An empty
+            // clipboard is therefore not an error: it degrades to a plain new
+            // note rather than a button that sometimes does nothing.
+            //
+            // The note is also written out to the linked folder right here, and
+            // that is not belt-and-braces — the editor cannot be trusted with
+            // it. Its autosave (DebouncedSaver) only runs once an *edit* bumps
+            // the trigger, so a note whose text arrived from the clipboard and
+            // which the user then just backs out of is never saved, and so is
+            // never mirrored. Without this write the note would exist only in
+            // the database, and the folder — the source of truth this whole
+            // workflow is built on — would never learn about it.
+            //
+            // The write is `writeNoteAndStamp`, so it also records
+            // `lastImportedAt`. That stamp is what later lets the prune pass
+            // take the note away when its file is moved out of the folder.
+            //
+            // Only when there is text: an empty clipboard leaves an empty note
+            // that the editor's own #405 cleanup should delete as usual, and a
+            // mirror write would stamp it and defeat that.
+            val newNoteFromClipboard: suspend () -> Note = {
+                val text = clipboardText(context)
+                val newNote = viewModel.createNote(
+                    initialContent = text.orEmpty(),
+                    titleSource = appSettings.noteTitleSource
+                )
+                if (text != null) {
+                    val uri = appSettings.syncFolderUriOrNull()
+                    if (uri == null) {
+                        // Said out loud rather than swallowed: with no folder
+                        // chosen there is nowhere to write, and a paste that
+                        // leaves only a row in the database looks exactly like
+                        // the export having broken. Reuses the Settings screen's
+                        // own wording, so it is already localised.
+                        Toast.makeText(
+                            context,
+                            R.string.sync_status_unset,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        // Detached from the caller on purpose: the editor should
+                        // open without waiting on a SAF write, which can take a
+                        // visible moment on a slow provider.
+                        hostScope.launch {
+                            withContext(Dispatchers.IO) {
+                                NoteFolderMirror.writeNoteAndStamp(
+                                    context = context,
+                                    folderUri = uri,
+                                    note = newNote,
+                                    extension = appSettings.syncFileExtension,
+                                    metadata = appSettings.mirrorMetadata(),
+                                    onStamped = { stamped -> noteRepository.updateNote(stamped) }
+                                )
+                            }
+                        }
+                    }
+                }
+                newNote
+            }
             // "Open file…" (#326). The picker's read grant lasts as long as this
             // task, which is exactly how long the viewer needs it — nothing is
             // persisted, so the app never accumulates access to files it is no
@@ -415,6 +478,12 @@ fun MarkleafNavHost(
                                 onFabClick = {
                                     coroutineScope.launch {
                                         val newNote = viewModel.createNote()
+                                        selectedNoteId = newNote.id
+                                    }
+                                },
+                                onPasteNewNote = {
+                                    coroutineScope.launch {
+                                        val newNote = newNoteFromClipboard()
                                         selectedNoteId = newNote.id
                                     }
                                 },
@@ -543,6 +612,15 @@ fun MarkleafNavHost(
                             val newNote = viewModel.createNote()
                             // The note did not exist when the FAB was drawn, so the
                             // FAB owns a fixed key rather than one per note.
+                            noteOrigin = NoteOrigin(newNote.id, NoteSource.FAB)
+                            navController.navigateOnMain(NavRoutes.editorRoute(newNote.id))
+                        }
+                    },
+                    onPasteNewNote = {
+                        coroutineScope.launch {
+                            val newNote = newNoteFromClipboard()
+                            // Same fixed key as the add FAB above: the note did
+                            // not exist when this button was drawn.
                             noteOrigin = NoteOrigin(newNote.id, NoteSource.FAB)
                             navController.navigateOnMain(NavRoutes.editorRoute(newNote.id))
                         }
@@ -804,6 +882,28 @@ private val OPEN_FILE_MIME_TYPES = arrayOf("text/*", "application/octet-stream")
  */
 private suspend fun NavHostController.navigateOnMain(route: String) {
     withContext(Dispatchers.Main.immediate) { navigate(route) }
+}
+
+/**
+ * The clipboard as plain text, or null when there is nothing usable there.
+ *
+ * Null covers all three nothings the paste button has to survive: no clip at
+ * all, a clip with no items, and one whose first item carries no text — a
+ * copied image, say. Blank and whitespace-only clips are null too, and leading
+ * and trailing whitespace is trimmed off the rest, so a paste never starts with
+ * a stray blank line. Callers treat null as "no text to prefill" rather than as
+ * a failure.
+ *
+ * Reading the clipboard needs the app in focus on Android 10+, which is exactly
+ * the state a tapped FAB leaves it in; the platform's own "pasted from" toast on
+ * Android 12+ is not suppressed here.
+ */
+private fun clipboardText(context: Context): String? {
+    val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        ?: return null
+    val clip = manager.primaryClip ?: return null
+    if (clip.itemCount == 0) return null
+    return clip.getItemAt(0)?.coerceToText(context)?.toString()?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 @Composable

@@ -65,6 +65,7 @@
     <string name="image_alt_dialog_label">Описание</string>
     <string name="image_alt_dialog_save">Сохранить</string>
     <string name="add_note">Добавить заметку</string>
+    <string name="paste_new_note">Вставить новую заметку</string>
     <string name="no_notes_yet">Заметок пока нет</string>
     <string name="create_first_note_hint">Нажмите +, чтобы создать первую заметку</string>
     <string name="create_note">Создать заметку</string>

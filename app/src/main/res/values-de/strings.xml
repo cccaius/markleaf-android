@@ -57,6 +57,7 @@
     <string name="image_alt_dialog_label">Beschreibung</string>
     <string name="image_alt_dialog_save">Speichern</string>
     <string name="add_note">Notiz hinzufügen</string>
+    <string name="paste_new_note">Neue Notiz einfügen</string>
     <string name="no_notes_yet">Noch keine Notizen</string>
     <string name="create_first_note_hint">Tippe auf +, um deine erste Notiz zu erstellen</string>
     <string name="create_note">Notiz erstellen</string>

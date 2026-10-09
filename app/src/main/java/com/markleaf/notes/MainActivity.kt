@@ -107,10 +107,26 @@ class MainActivity : FragmentActivity() {
                         titleSource = settings.noteTitleSource
                     )
                 }
+                // The other half of the loop: the linked folder is the source of
+                // truth for the notes Markleaf itself exported there, so a file
+                // the user has moved away takes its note with it. Read the set
+                // again rather than pruning against the pre-import snapshot —
+                // the pass above may have created notes from files.
+                val removed = withContext(Dispatchers.IO) {
+                    NoteFolderMirror.pruneMissingNotes(
+                        context = applicationContext,
+                        folderUri = uri,
+                        existing = noteRepository.getAllNotes(),
+                        metadata = settings.mirrorMetadata(),
+                        applyDelete = { id -> noteRepository.deleteForever(id) }
+                    )
+                }
                 // The import can finish after the onPause that would otherwise
                 // have covered it, and a placed widget has no other way to hear
                 // that a note it shows was rewritten from the folder (#262).
-                if (result.changedAnything()) WidgetRefresh.notesChanged(applicationContext)
+                if (result.changedAnything() || removed > 0) {
+                    WidgetRefresh.notesChanged(applicationContext)
+                }
                 settingsRepository.setSyncLastSyncedAt(System.currentTimeMillis())
             }
         }

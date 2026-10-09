@@ -65,6 +65,7 @@
     <string name="image_alt_dialog_label">Description</string>
     <string name="image_alt_dialog_save">Save</string>
     <string name="add_note">Add Note</string>
+    <string name="paste_new_note">Paste new note</string>
     <string name="no_notes_yet">No notes yet</string>
     <string name="create_first_note_hint">Tap + to create your first note</string>
     <string name="create_note">Create note</string>

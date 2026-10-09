@@ -29,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Inventory2
@@ -52,6 +53,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -118,6 +120,7 @@ fun NotesListScreen(
     viewModel: NotesViewModel,
     onNoteClick: (String?) -> Unit,
     onFabClick: () -> Unit,
+    onPasteNewNote: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onTagsClick: () -> Unit = {},
     onArchiveClick: () -> Unit = {},
@@ -364,17 +367,43 @@ fun NotesListScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                modifier = Modifier.fabSharedBounds(),
-                onClick = {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onFabClick()
-                }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = stringResource(R.string.add_note)
-                )
+                // The plain new-note action keeps its own shape but steps aside:
+                // the paste button below took the FAB's corner, because on a
+                // clip-first workflow it is the one that gets used. It keeps
+                // `fabSharedBounds()` — that modifier is the source side of the
+                // card→editor morph, and both buttons open the editor on a new
+                // note, so they can share one origin.
+                SmallFloatingActionButton(
+                    modifier = Modifier.fabSharedBounds(),
+                    onClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onFabClick()
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_add),
+                        contentDescription = stringResource(R.string.add_note)
+                    )
+                }
+                // One tap: whatever is on the clipboard becomes a note and opens
+                // in the editor, so it can be fixed up before the autosave writes
+                // it to the mirrored folder. An empty clipboard just gives an
+                // empty note.
+                FloatingActionButton(
+                    onClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onPasteNewNote()
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentPaste,
+                        contentDescription = stringResource(R.string.paste_new_note)
+                    )
+                }
             }
         },
         floatingActionButtonPosition = FabPosition.End

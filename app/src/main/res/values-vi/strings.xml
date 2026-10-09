@@ -58,6 +58,7 @@
     <string name="image_alt_dialog_label">Mô tả</string>
     <string name="image_alt_dialog_save">Lưu</string>
     <string name="add_note">Thêm ghi chú</string>
+    <string name="paste_new_note">Dán ghi chú mới</string>
     <string name="no_notes_yet">Chưa có ghi chú nào</string>
     <string name="create_first_note_hint">Nhấn + để tạo ghi chú đầu tiên</string>
     <string name="create_note">Tạo ghi chú</string>

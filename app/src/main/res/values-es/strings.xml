@@ -57,6 +57,7 @@
     <string name="image_alt_dialog_label">Descripción</string>
     <string name="image_alt_dialog_save">Guardar</string>
     <string name="add_note">Agregar nota</string>
+    <string name="paste_new_note">Pegar nota nueva</string>
     <string name="no_notes_yet">Aún no hay notas</string>
     <string name="create_first_note_hint">Toca + para crear tu primera nota</string>
     <string name="create_note">Crear nota</string>
